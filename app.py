@@ -11,17 +11,20 @@ if uploaded_file:
         # Read BOM sheet without headers to scan for total
         raw_bom = pd.read_excel(uploaded_file, sheet_name="BOM", header=None)
 
-        # Try to find "Grand Total" anywhere
         total_project_cost = None
-        for row in raw_bom.itertuples(index=False):
-            row_values = [str(v).strip().lower() if pd.notna(v) else "" for v in row]
-            if "grand total" in row_values:
-                # Find the index of "grand total" and get the value in the next column
-                idx = row_values.index("grand total")
-                try:
-                    total_project_cost = float(row[idx + 1])
-                except:
-                    pass
+
+        # Search for "grand total" (case-insensitive, ignores punctuation like ':')
+        for i, row in raw_bom.iterrows():
+            row_str = [str(v).strip().lower() if pd.notna(v) else "" for v in row]
+            for j, cell in enumerate(row_str):
+                if "grand total" in cell:
+                    try:
+                        total_project_cost = float(row[j+1])
+                        break
+                    except:
+                        continue
+            if total_project_cost is not None:
+                break
 
         if total_project_cost is None:
             st.error("❌ Could not find 'Grand Total' in BOM sheet. Please check formatting.")
