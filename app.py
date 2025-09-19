@@ -11,9 +11,7 @@ def calculate_roi(subscribers, take_rate, max_customers, install_cost,
                   monthly_revenue, years, project_cost, discount_rate):
     total_possible = min(int(subscribers * take_rate), max_customers)
 
-    # Subscribers steady from year 1
     subs_pattern = [total_possible] * years
-
     years_list = list(range(1, years+1))
 
     annual_revenue = [subs * monthly_revenue * 12 for subs in subs_pattern]
@@ -73,80 +71,87 @@ def export_scenarios(kpi_df, base, opt, pes):
     return output.getvalue()
 
 # ---------------------------
-# Load Data
-# ---------------------------
-xls = pd.ExcelFile("ROI worksheet.xlsx")
-bom_df = pd.read_excel(xls, sheet_name="BOM")
-# Pull project cost from G2 (Grand Total)
-project_cost = bom_df.iloc[1,6] if bom_df.shape[1] > 6 else bom_df.iloc[1,-1]
-
-# ---------------------------
-# Sidebar Inputs
-# ---------------------------
-st.sidebar.header("Base Inputs")
-subscribers = st.sidebar.number_input("Total Subscribers (Households)", 1, 100000, 188)
-max_customers = st.sidebar.number_input("Max Customers", 1, 100000, 200)
-years = st.sidebar.slider("Projection Years", 1, 10, 5)
-discount_rate = st.sidebar.number_input("Discount Rate (%)", 0.0, 20.0, 5.0, step=0.5)/100
-
-# Scenario inputs
-def scenario_inputs(label, default_take, default_rev, default_cost):
-    st.sidebar.subheader(label)
-    take_rate = st.sidebar.slider(f"{label} - Take Rate", 0.1, 1.0, default_take, 0.05)
-    monthly_rev = st.sidebar.number_input(f"{label} - Monthly Fee", 0.0, 500.0, default_rev, step=5.0)
-    onboard_cost = st.sidebar.number_input(f"{label} - Onboarding Cost", 0.0, 1e6, default_cost, step=100.0)
-    return take_rate, monthly_rev, onboard_cost
-
-base_take, base_rev, base_cost = scenario_inputs("Base", 0.5, 70.0, 50000.0)
-opt_take, opt_rev, opt_cost = scenario_inputs("Optimistic", 0.7, 80.0, 40000.0)
-pes_take, pes_rev, pes_cost = scenario_inputs("Pessimistic", 0.3, 60.0, 60000.0)
-
-# ---------------------------
-# Run Scenarios
-# ---------------------------
-base = calculate_roi(subscribers, base_take, max_customers, base_cost, base_rev, years, project_cost, discount_rate)
-opt = calculate_roi(subscribers, opt_take, max_customers, opt_cost, opt_rev, years, project_cost, discount_rate)
-pes = calculate_roi(subscribers, pes_take, max_customers, pes_cost, pes_rev, years, project_cost, discount_rate)
-
-# ---------------------------
-# Display Results
+# Upload File
 # ---------------------------
 st.title("📊 ROI Scenario Dashboard")
 
-st.subheader("KPI Comparison")
-kpi_df = pd.DataFrame([
-    ["Base", base["payback"], f"${base['net_profit']:,.0f}", f"{base['roi_pct']:.1f}%", f"${base['npv']:,.0f}", f"{base['irr']:.1f}%" if base["irr"] else "n/a"],
-    ["Optimistic", opt["payback"], f"${opt['net_profit']:,.0f}", f"{opt['roi_pct']:.1f}%", f"${opt['npv']:,.0f}", f"{opt['irr']:.1f}%" if opt["irr"] else "n/a"],
-    ["Pessimistic", pes["payback"], f"${pes['net_profit']:,.0f}", f"{pes['roi_pct']:.1f}%", f"${pes['npv']:,.0f}", f"{pes['irr']:.1f}%" if pes["irr"] else "n/a"],
-], columns=["Scenario","Payback Year","Net Profit","ROI %","NPV","IRR"])
-st.dataframe(kpi_df)
+uploaded_file = st.file_uploader("Upload ROI Workbook", type=["xlsx"])
 
-# ROI Chart
-st.subheader("ROI Over Time")
-fig1 = go.Figure()
-fig1.add_trace(go.Scatter(x=base["years"], y=base["roi"], name="Base"))
-fig1.add_trace(go.Scatter(x=opt["years"], y=opt["roi"], name="Optimistic"))
-fig1.add_trace(go.Scatter(x=pes["years"], y=pes["roi"], name="Pessimistic"))
-fig1.update_layout(title="Cumulative ROI", xaxis_title="Year", yaxis_title="USD")
-st.plotly_chart(fig1, use_container_width=True)
+if uploaded_file:
+    try:
+        xls = pd.ExcelFile(uploaded_file)
+        bom_df = pd.read_excel(xls, sheet_name="BOM")
 
-# Cash Flow Chart
-st.subheader("Cash Flow Over Time")
-fig2 = go.Figure()
-fig2.add_trace(go.Scatter(x=base["years"], y=base["cash_flow"], name="Base"))
-fig2.add_trace(go.Scatter(x=opt["years"], y=opt["cash_flow"], name="Optimistic"))
-fig2.add_trace(go.Scatter(x=pes["years"], y=pes["cash_flow"], name="Pessimistic"))
-fig2.update_layout(title="Annual Cash Flow", xaxis_title="Year", yaxis_title="USD")
-st.plotly_chart(fig2, use_container_width=True)
+        # Pull project cost (Grand Total G2 or fallback)
+        try:
+            project_cost = bom_df.iloc[1,6]
+        except:
+            project_cost = bom_df.iloc[1,-1]
 
-# ---------------------------
-# Download
-# ---------------------------
-st.subheader("Download Results")
-excel_data = export_scenarios(kpi_df, base, opt, pes)
-st.download_button(
-    label="📥 Download All Scenarios (Excel)",
-    data=excel_data,
-    file_name="ROI_Scenarios.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+        # ---------------------------
+        # Sidebar Inputs
+        # ---------------------------
+        st.sidebar.header("Base Inputs")
+        subscribers = st.sidebar.number_input("Total Subscribers (Households)", 1, 100000, 188)
+        max_customers = st.sidebar.number_input("Max Customers", 1, 100000, 200)
+        years = st.sidebar.slider("Projection Years", 1, 10, 5)
+        discount_rate = st.sidebar.number_input("Discount Rate (%)", 0.0, 20.0, 5.0, step=0.5)/100
+
+        # Scenario inputs
+        def scenario_inputs(label, default_take, default_rev, default_cost):
+            st.sidebar.subheader(label)
+            take_rate = st.sidebar.slider(f"{label} - Take Rate", 0.1, 1.0, default_take, 0.05)
+            monthly_rev = st.sidebar.number_input(f"{label} - Monthly Fee", 0.0, 500.0, default_rev, step=5.0)
+            onboard_cost = st.sidebar.number_input(f"{label} - Onboarding Cost", 0.0, 1e6, default_cost, step=100.0)
+            return take_rate, monthly_rev, onboard_cost
+
+        base_take, base_rev, base_cost = scenario_inputs("Base", 0.5, 70.0, 50000.0)
+        opt_take, opt_rev, opt_cost = scenario_inputs("Optimistic", 0.7, 80.0, 40000.0)
+        pes_take, pes_rev, pes_cost = scenario_inputs("Pessimistic", 0.3, 60.0, 60000.0)
+
+        # Run scenarios
+        base = calculate_roi(subscribers, base_take, max_customers, base_cost, base_rev, years, project_cost, discount_rate)
+        opt = calculate_roi(subscribers, opt_take, max_customers, opt_cost, opt_rev, years, project_cost, discount_rate)
+        pes = calculate_roi(subscribers, pes_take, max_customers, pes_cost, pes_rev, years, project_cost, discount_rate)
+
+        # KPI Table
+        st.subheader("KPI Comparison")
+        kpi_df = pd.DataFrame([
+            ["Base", base["payback"], f"${base['net_profit']:,.0f}", f"{base['roi_pct']:.1f}%", f"${base['npv']:,.0f}", f"{base['irr']:.1f}%" if base["irr"] else "n/a"],
+            ["Optimistic", opt["payback"], f"${opt['net_profit']:,.0f}", f"{opt['roi_pct']:.1f}%", f"${opt['npv']:,.0f}", f"{opt['irr']:.1f}%" if opt["irr"] else "n/a"],
+            ["Pessimistic", pes["payback"], f"${pes['net_profit']:,.0f}", f"{pes['roi_pct']:.1f}%", f"${pes['npv']:,.0f}", f"{pes['irr']:.1f}%" if pes["irr"] else "n/a"],
+        ], columns=["Scenario","Payback Year","Net Profit","ROI %","NPV","IRR"])
+        st.dataframe(kpi_df)
+
+        # ROI Chart
+        st.subheader("ROI Over Time")
+        fig1 = go.Figure()
+        fig1.add_trace(go.Scatter(x=base["years"], y=base["roi"], name="Base"))
+        fig1.add_trace(go.Scatter(x=opt["years"], y=opt["roi"], name="Optimistic"))
+        fig1.add_trace(go.Scatter(x=pes["years"], y=pes["roi"], name="Pessimistic"))
+        fig1.update_layout(title="Cumulative ROI", xaxis_title="Year", yaxis_title="USD")
+        st.plotly_chart(fig1, use_container_width=True)
+
+        # Cash Flow Chart
+        st.subheader("Cash Flow Over Time")
+        fig2 = go.Figure()
+        fig2.add_trace(go.Scatter(x=base["years"], y=base["cash_flow"], name="Base"))
+        fig2.add_trace(go.Scatter(x=opt["years"], y=opt["cash_flow"], name="Optimistic"))
+        fig2.add_trace(go.Scatter(x=pes["years"], y=pes["cash_flow"], name="Pessimistic"))
+        fig2.update_layout(title="Annual Cash Flow", xaxis_title="Year", yaxis_title="USD")
+        st.plotly_chart(fig2, use_container_width=True)
+
+        # Download
+        st.subheader("Download Results")
+        excel_data = export_scenarios(kpi_df, base, opt, pes)
+        st.download_button(
+            label="📥 Download All Scenarios (Excel)",
+            data=excel_data,
+            file_name="ROI_Scenarios.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    except Exception as e:
+        st.error(f"Error reading file: {e}")
+else:
+    st.info("👆 Please upload your ROI workbook to begin.")
