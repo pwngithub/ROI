@@ -19,16 +19,29 @@ if uploaded_file:
 
         bom_clean["Total price"] = pd.to_numeric(bom_clean["Total price"], errors="coerce")
 
-        # Reload raw sheet to find section headers
+        # Reload raw sheet to find section headers & official Grand Total
         raw_bom = pd.read_excel(uploaded_file, sheet_name="BOM", header=None)
 
         sections = []
+        grand_total_value = None
+
         for i, row in raw_bom.iterrows():
-            row_str = [str(v).strip() if pd.notna(v) else "" for v in row]
+            row_str = [str(v).strip().lower() if pd.notna(v) else "" for v in row]
+
+            # Section headers
             for cell in row_str:
                 if "entire project" in cell.lower():
                     sections.append((i, cell.strip()))
 
+            # Grand Total detection
+            for j, cell in enumerate(row_str):
+                if "grand total" in cell:
+                    try:
+                        grand_total_value = float(row[j+1])
+                    except:
+                        continue
+
+        # Compute section subtotals
         section_totals = {}
         for idx, (row_index, section_name) in enumerate(sections):
             start = row_index + 2
@@ -42,10 +55,14 @@ if uploaded_file:
         section_df = pd.DataFrame(
             {"Section": list(section_totals.keys()), "Subtotal": list(section_totals.values())}
         )
-        section_df.loc[len(section_df.index)] = ["Grand Total", section_df["Subtotal"].sum()]
+        if grand_total_value is not None:
+            section_df.loc[len(section_df.index)] = ["Grand Total", grand_total_value]
+        else:
+            section_df.loc[len(section_df.index)] = ["Grand Total", section_df["Subtotal"].sum()]
+
         st.dataframe(section_df.style.format({"Subtotal": "${:,.2f}"}), use_container_width=True)
 
-        # 🔥 Bar chart instead of matplotlib pie
+        # Altair bar chart of section breakdown
         st.markdown("### 📊 Cost Breakdown by Section")
         section_chart = alt.Chart(section_df[section_df["Section"] != "Grand Total"]).mark_bar().encode(
             x=alt.X("Section", sort="-y"),
@@ -54,8 +71,12 @@ if uploaded_file:
         ).properties(width=700, height=400)
         st.altair_chart(section_chart, use_container_width=True)
 
-        # Use grand total for ROI calculator
-        total_project_cost = section_df.loc[section_df["Section"] == "Grand Total", "Subtotal"].values[0]
+        # Use official Grand Total for ROI calculator
+        if grand_total_value is not None:
+            total_project_cost = grand_total_value
+        else:
+            total_project_cost = section_df.loc[section_df["Section"] == "Grand Total", "Subtotal"].values[0]
+
         st.success(f"💰 Grand Total Project Cost: **${total_project_cost:,.2f}**")
 
         # ROI calculator inputs
