@@ -4,7 +4,7 @@ This Streamlit app calculates the number of customers needed to achieve ROI base
 
 ## Features
 - Upload an Excel file containing a BOM sheet
-- Automatically extracts **Grand Total** (flexible search for "Grand Total" text)
+- Automatically extracts **section subtotals** and **Grand Total**
 - Adjustable **monthly revenue per customer**
 - Adjustable **ROI timeframe (years)**
 - Shows **required customers for break-even**
