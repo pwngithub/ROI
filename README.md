@@ -1,6 +1,6 @@
 # ROI Calculator from BOM 📊
 
-This Streamlit app calculates the number of customers needed to achieve ROI based on a BOM Excel file.
+This Streamlit app calculates ROI based on BOM costs and your market assumptions.
 
 ## Features
 - Upload an Excel file containing a BOM sheet
@@ -10,13 +10,13 @@ This Streamlit app calculates the number of customers needed to achieve ROI base
 - Adjustable **ROI timeframe (years)**
 - Includes a **one-time install fee per customer**
 - Uses the **Grand Total from the BOM sheet**
-- Shows **required customers for break-even**
-- Includes **multi-year comparison table**
-- NEW: Add market assumptions
-  - Maximum serviceable customers
-  - Expected take rate (%)
-  - Effective customers and **cost per customer**
-  - Feasibility check (effective customers vs. customers needed)
+- Shows ROI results only based on **your max customers and take rate**
+- Calculates:
+  - Effective customers
+  - Cost per customer
+  - Total revenue vs. project cost
+  - ROI coverage (x multiple)
+- Includes **multi-year scenario table**
 
 ## How to Run
 ```bash

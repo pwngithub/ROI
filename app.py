@@ -84,31 +84,7 @@ if uploaded_file:
         install_fee = st.number_input("One-time install fee per customer ($)", value=99.95, step=1.00, format="%.2f")
         years = st.slider("ROI timeframe (years)", min_value=1, max_value=10, value=3)
 
-        # ROI calculation with install fee
-        months = years * 12
-        revenue_per_customer = (monthly_price * months) + install_fee
-        customers_needed = total_project_cost / revenue_per_customer
-
-        st.subheader("📈 ROI Analysis")
-        st.write(f"Over **{years} years ({months} months)** at **${monthly_price:.2f}/month + ${install_fee:.2f} install fee per customer**:")
-        st.metric("Customers Needed", f"{customers_needed:,.0f}")
-
-        # Scenario table
-        st.markdown("### 🔍 Multi-Year Scenario Comparison")
-        scenario_years = list(range(1, 11))
-        roi_df = pd.DataFrame({
-            "Years": scenario_years,
-            "Months": [y * 12 for y in scenario_years],
-        })
-        roi_df["Revenue per Customer"] = (roi_df["Months"] * monthly_price) + install_fee
-        roi_df["Customers Needed"] = total_project_cost / roi_df["Revenue per Customer"]
-
-        st.dataframe(roi_df.style.format({
-            "Revenue per Customer": "${:,.2f}",
-            "Customers Needed": "{:,.0f}"
-        }), use_container_width=True)
-
-        # 📌 Market assumptions section
+        # Market assumptions
         st.subheader("📌 Market Assumptions")
         max_customers = st.number_input("Maximum serviceable customers", value=1000, step=50)
         take_rate = st.slider("Expected take rate (%)", min_value=1, max_value=100, value=40)
@@ -123,11 +99,39 @@ if uploaded_file:
         st.write(f"**Effective Customers (based on {take_rate}% take rate):** {effective_customers:,}")
         st.write(f"**Cost per Customer:** ${cost_per_customer:,.2f}")
 
-        # Compare feasibility
-        if effective_customers >= customers_needed:
-            st.success(f"✅ With {effective_customers:,} effective customers, the project covers costs (needs {customers_needed:,.0f}).")
+        # ROI calculation with install fee using effective customers
+        months = years * 12
+        revenue_per_customer = (monthly_price * months) + install_fee
+        total_revenue = effective_customers * revenue_per_customer
+        roi_coverage = total_revenue / total_project_cost
+
+        st.subheader("📈 ROI Analysis (Based on Market Assumptions)")
+        st.write(f"Over **{years} years ({months} months)** with {effective_customers:,} effective customers:")
+        st.metric("Total Revenue", f"${total_revenue:,.2f}")
+        st.metric("Project Cost", f"${total_project_cost:,.2f}")
+        st.metric("ROI Coverage", f"{roi_coverage:.2f}x")
+
+        if roi_coverage >= 1:
+            st.success("✅ The project covers its cost with the given customers and take rate.")
         else:
-            st.error(f"❌ With {effective_customers:,} effective customers, the project falls short (needs {customers_needed:,.0f}).")
+            st.error("❌ The project does not cover its cost with the given customers and take rate.")
+
+        # Scenario table by years
+        st.markdown("### 🔍 Multi-Year Scenario Comparison")
+        scenario_years = list(range(1, 11))
+        roi_df = pd.DataFrame({
+            "Years": scenario_years,
+            "Months": [y * 12 for y in scenario_years],
+        })
+        roi_df["Revenue per Customer"] = (roi_df["Months"] * monthly_price) + install_fee
+        roi_df["Total Revenue"] = effective_customers * roi_df["Revenue per Customer"]
+        roi_df["ROI Coverage (x)"] = roi_df["Total Revenue"] / total_project_cost
+
+        st.dataframe(roi_df.style.format({
+            "Revenue per Customer": "${:,.2f}",
+            "Total Revenue": "${:,.2f}",
+            "ROI Coverage (x)": "{:,.2f}"
+        }), use_container_width=True)
 
     except Exception as e:
         st.error(f"⚠️ Error processing BOM: {e}")
