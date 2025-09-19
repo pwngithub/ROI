@@ -1,12 +1,13 @@
-# ROI Scenario Comparison Dashboard
+# ROI Scenario Dashboard
 
-This Streamlit app models ROI for broadband projects with **Base, Optimistic, and Pessimistic scenarios**.
+This Streamlit app calculates ROI, NPV, and IRR for broadband projects using inputs from the ROI and BOM sheets.
 
 ## Features
-- KPI summary (Payback, ROI %, Net Profit, NPV, IRR)
-- ROI and Cash Flow charts
-- Scenario comparison
-- Excel export with all details
+- Input adjustable parameters (subscribers, take rate, fees, onboarding)
+- Scenarios (Base, Optimistic, Pessimistic)
+- ROI, NPV, IRR calculations
+- Interactive charts with Plotly
+- Excel export
 
 ## Run Locally
 ```bash
