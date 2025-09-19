@@ -60,8 +60,6 @@ def calculate_roi(subscribers, take_rate, max_customers, install_cost,
     return {
         "quarters": quarters,
         "roi": roi,
-        "total_revenue": total_revenue,
-        "total_costs": total_costs,
         "cash_flow": cash_flow,
         "payback": payback_text,
         "net_profit": net_profit,
@@ -130,13 +128,23 @@ st.dataframe(kpi_df)
 # Plot ROI Comparison
 # ---------------------------
 st.subheader("ROI Over Time (Scenarios)")
+fig1 = go.Figure()
+fig1.add_trace(go.Scatter(x=base["quarters"], y=base["roi"], name="Base", line=dict(color="blue")))
+fig1.add_trace(go.Scatter(x=opt["quarters"], y=opt["roi"], name="Optimistic", line=dict(color="green")))
+fig1.add_trace(go.Scatter(x=pes["quarters"], y=pes["roi"], name="Pessimistic", line=dict(color="red")))
+fig1.update_layout(title="Cumulative ROI by Scenario", xaxis_title="Quarter", yaxis_title="USD ($)", hovermode="x unified")
+st.plotly_chart(fig1, use_container_width=True)
 
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=base["quarters"], y=base["roi"], name="Base", line=dict(color="blue")))
-fig.add_trace(go.Scatter(x=opt["quarters"], y=opt["roi"], name="Optimistic", line=dict(color="green")))
-fig.add_trace(go.Scatter(x=pes["quarters"], y=pes["roi"], name="Pessimistic", line=dict(color="red")))
-fig.update_layout(title="Cumulative ROI by Scenario", xaxis_title="Quarter", yaxis_title="USD ($)", hovermode="x unified")
-st.plotly_chart(fig, use_container_width=True)
+# ---------------------------
+# Plot Cash Flow Comparison
+# ---------------------------
+st.subheader("Cash Flow Over Time (Scenarios)")
+fig2 = go.Figure()
+fig2.add_trace(go.Scatter(x=base["quarters"], y=base["cash_flow"], name="Base", line=dict(color="blue")))
+fig2.add_trace(go.Scatter(x=opt["quarters"], y=opt["cash_flow"], name="Optimistic", line=dict(color="green")))
+fig2.add_trace(go.Scatter(x=pes["quarters"], y=pes["cash_flow"], name="Pessimistic", line=dict(color="red")))
+fig2.update_layout(title="Quarterly Cash Flow by Scenario", xaxis_title="Quarter", yaxis_title="USD ($)", hovermode="x unified")
+st.plotly_chart(fig2, use_container_width=True)
 
 # ---------------------------
 # Download

@@ -1,27 +1,15 @@
-# ROI Calculator from BOM 📊
+# ROI Scenario Comparison Dashboard
 
-This Streamlit app calculates ROI based on BOM costs and your market assumptions.
+This Streamlit app models ROI for broadband projects with **Base, Optimistic, and Pessimistic scenarios**.
 
 ## Features
-- Upload an Excel file containing a BOM sheet
-- Automatically extracts **section subtotals** and the official **Grand Total**
-- Displays a **bar chart** showing section cost breakdown
-- Adjustable **monthly revenue per customer**
-- Adjustable **ROI timeframe (years)**
-- Includes a **one-time install fee per customer**
-- Uses the **Grand Total from the BOM sheet**
-- Shows ROI results only based on **your max customers and take rate**
-- Calculates:
-  - Effective customers
-  - Cost per customer
-  - Total revenue vs. project cost
-  - ROI coverage (x multiple)
-- Includes **multi-year scenario table**
+- KPI summary (Payback, ROI %, Net Profit, NPV, IRR)
+- ROI and Cash Flow charts
+- Scenario comparison
+- Excel export with all details
 
-## How to Run
+## Run Locally
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
 ```
-
-Then open [http://localhost:8501](http://localhost:8501) in your browser.
