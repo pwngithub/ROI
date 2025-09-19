@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import altair as alt
 
 st.set_page_config(page_title="ROI Calculator", page_icon="📊", layout="wide")
 st.title("📊 ROI Calculator from BOM")
@@ -45,13 +45,14 @@ if uploaded_file:
         section_df.loc[len(section_df.index)] = ["Grand Total", section_df["Subtotal"].sum()]
         st.dataframe(section_df.style.format({"Subtotal": "${:,.2f}"}), use_container_width=True)
 
-        # Pie chart of section breakdown
+        # 🔥 Bar chart instead of matplotlib pie
         st.markdown("### 📊 Cost Breakdown by Section")
-        fig, ax = plt.subplots()
-        section_df_plot = section_df[section_df["Section"] != "Grand Total"]
-        ax.pie(section_df_plot["Subtotal"], labels=section_df_plot["Section"], autopct="%1.1f%%", startangle=90)
-        ax.axis("equal")
-        st.pyplot(fig)
+        section_chart = alt.Chart(section_df[section_df["Section"] != "Grand Total"]).mark_bar().encode(
+            x=alt.X("Section", sort="-y"),
+            y="Subtotal",
+            tooltip=["Section", "Subtotal"]
+        ).properties(width=700, height=400)
+        st.altair_chart(section_chart, use_container_width=True)
 
         # Use grand total for ROI calculator
         total_project_cost = section_df.loc[section_df["Section"] == "Grand Total", "Subtotal"].values[0]
