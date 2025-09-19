@@ -9,9 +9,14 @@ This Streamlit app calculates the number of customers needed to achieve ROI base
 - Adjustable **monthly revenue per customer**
 - Adjustable **ROI timeframe (years)**
 - Includes a **one-time install fee per customer**
-- Uses the **Grand Total from the BOM sheet** (e.g., 646,073.15)
+- Uses the **Grand Total from the BOM sheet**
 - Shows **required customers for break-even**
 - Includes **multi-year comparison table**
+- NEW: Add market assumptions
+  - Maximum serviceable customers
+  - Expected take rate (%)
+  - Effective customers and **cost per customer**
+  - Feasibility check (effective customers vs. customers needed)
 
 ## How to Run
 ```bash
