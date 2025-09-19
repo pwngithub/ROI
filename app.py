@@ -82,11 +82,17 @@ if uploaded_file:
         xls = pd.ExcelFile(uploaded_file)
         bom_df = pd.read_excel(xls, sheet_name="BOM")
 
-        # Pull project cost (Grand Total G2 or fallback)
-        try:
-            project_cost = bom_df.iloc[1,6]
-        except:
-            project_cost = bom_df.iloc[1,-1]
+        # Pull project cost (look for 'Grand Total')
+        project_cost = None
+        for i, row in bom_df.iterrows():
+            if row.astype(str).str.contains("Grand Total", case=False, na=False).any():
+                nums = [v for v in row if isinstance(v, (int, float))]
+                if nums:
+                    project_cost = nums[0]
+                    break
+        if project_cost is None:
+            st.warning("⚠️ Could not find Grand Total in BOM sheet. Defaulting to 0.")
+            project_cost = 0.0
 
         # ---------------------------
         # Sidebar Inputs
